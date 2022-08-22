@@ -1,2 +1,5 @@
 /venv
-
+secrets.py
+__pycache__/
+old/
+*.db

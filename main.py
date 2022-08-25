@@ -4,9 +4,8 @@ import random
 
 from .db import DBHandler
 from .assignment import Assignment
-from .cfg import API_URL, API_KEY, DB_PATH
+from .cfg import API_URL, API_KEY, DB_PATH, TEST
 
-TEST = False
 if TEST:
     DB_PATH = 'test.db'
 

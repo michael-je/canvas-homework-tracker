@@ -21,7 +21,7 @@ class DBHandler():
                 notes text,
                 date text,
                 time text,
-                subject text
+                course_name text
             )
             """
         )
@@ -39,7 +39,7 @@ class DBHandler():
                 :notes,
                 :date,
                 :time,
-                :subject
+                :course_name
             )
             """,
             {
@@ -48,7 +48,7 @@ class DBHandler():
                 'notes': assignment.notes,
                 'date': assignment.datetime.strftime('%d-%m-%Y'),
                 'time': assignment.datetime.strftime('%H:%M'),
-                'subject': assignment.subject
+                'course_name': assignment.course_name
             }
         )
         conn.commit()
@@ -76,7 +76,7 @@ class DBHandler():
 
 if __name__ == '__main__':
     props = {
-        'subject': 'subject',
+        'course_name': 'course_name',
         'name': 'name',
         'notes': 'notes',
         'date': '09-04-2022',

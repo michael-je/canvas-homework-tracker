@@ -5,6 +5,7 @@ import random
 from .db import DBHandler
 from .assignment import Assignment
 from .cfg import API_URL, API_KEY, DB_PATH, TEST
+from .utils import NoAssignmentsError
 
 if TEST:
     DB_PATH = 'test.db'
@@ -30,7 +31,6 @@ def update_assignments(db, canvas):
             assignment = Assignment(assignment_props)
             if assignment.id not in [assignment.id for assignment in old_assignments]:
                 db.create_assignment(assignment)
-    print('List updated')
 
 
 def show_assignments(db, _canvas, hide_past_and_complete=True):
@@ -38,8 +38,7 @@ def show_assignments(db, _canvas, hide_past_and_complete=True):
     if hide_past_and_complete:
         assignments = list(filter(lambda a: a.datetime > datetime.now() and not a.complete, assignments))
     if not assignments:
-        print('no assignments to show')
-        return
+        raise NoAssignmentsError
     assignments.sort(key=lambda x: x.datetime.timestamp())
     for n, assignment in enumerate(assignments):
         print(f'{n+1:2}. {str(assignment)}')
@@ -109,7 +108,6 @@ def create_new_assignment(db, canvas):
     }
     assignment = Assignment(props)
     db.create_assignment(assignment)
-    print('Assignment added')
 
 
 def mark_assignment_complete(db, canvas):
@@ -125,13 +123,27 @@ def mark_assignment_complete(db, canvas):
     assignment = assignments[n-1]
     assignment.complete = not assignment.complete
     db.update_assignment(assignment)
-    print('assignment marked as complete')
+
+
+def delete_assignment(db, canvas):
+    assignments = db.get_assignments()
+    if not assignments:
+        raise NoAssignmentsError
+    assignments.sort(key=lambda x: x.datetime.timestamp())
+    show_assignments(db, canvas, hide_past_and_complete=False)
+    n = 0
+    while n not in range(1, len(assignments) + 1):
+        try:
+            n = int(input('which assignment to delete? > '))
+        except ValueError:
+            pass
+    db.delete_assignment(assignments[n-1])
 
 
 def main():
     ans = ''
-    while ans not in ['s', 'a', 'n', 'm', 'u']:
-        ans = input('[s]how, show[a]ll, [n]ew, [m]ark complete, [u]pdate? > ')
+    while ans not in ['s', 'a', 'n', 'm', 'd', 'u']:
+        ans = input('[s]how, show [a]ll, [n]ew, [m]ark complete, [d]elete, [u]pdate? > ')
 
     canvas = Canvas(API_URL, API_KEY)
     db = DBHandler(DB_PATH)
@@ -142,35 +154,21 @@ def main():
     if ans == 'a':
         show_assignments(db, canvas, hide_past_and_complete=False)
 
-    if ans == 'u':
-        update_assignments(db, canvas)
-
     if ans == 'n':
         create_new_assignment(db, canvas)
+        print('New assignment created')
 
     if ans == 'm':
         mark_assignment_complete(db, canvas)
+        print('assignment marked as complete')
+
+    if ans == 'd':
+        delete_assignment(db, canvas)
+        print('assignment deleted')
 
     if ans == 'u':
         update_assignments(db, canvas)
-
-    #if ans == 'd':
-    #    assignments = db.get_assignments()
-    #    if not assignments:
-    #        print('no assignments to show')
-    #        return 
-    #    assignments.sort(key=lambda x: x.datetime.timestamp())
-    #    for n, assignment in enumerate(assignments):
-    #        old_str = '(old) ' if assignment.datetime.timestamp() < datetime.now().timestamp() else ''
-    #        print(f'{old_str}{n+1:2}. {str(assignment)}')
-    #    n = 0
-    #    while n not in range(1, len(assignments) + 1):
-    #        try:
-    #            n = int(input('which assignment to delete? > '))
-    #        except ValueError:
-    #            pass
-    #    db.delete_assignment(assignments[n-1])
-    #    print('assignment deleted')
+        print('List updated')
         
 
 if __name__ == '__main__':
@@ -178,3 +176,5 @@ if __name__ == '__main__':
         main()
     except KeyboardInterrupt:
         print('\nexiting')
+    except NoAssignmentsError as e:
+        print(e)

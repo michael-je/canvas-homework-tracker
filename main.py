@@ -33,9 +33,10 @@ def update_assignments(db, canvas):
     print('List updated')
 
 
-def show_assignments(db, _canvas):
+def show_assignments(db, _canvas, hide_past_and_complete=True):
     assignments = db.get_assignments()
-    assignments = list(filter(lambda x: x.datetime > datetime.now(), assignments))
+    if hide_past_and_complete:
+        assignments = list(filter(lambda a: a.datetime > datetime.now() and not a.complete, assignments))
     if not assignments:
         print('no assignments to show')
         return
@@ -111,22 +112,47 @@ def create_new_assignment(db, canvas):
     print('Assignment added')
 
 
+def mark_assignment_complete(db, canvas):
+    show_assignments(db, canvas, hide_past_and_complete=False)
+    assignments = db.get_assignments()
+    assignments.sort(key=lambda x: x.datetime.timestamp())
+    n = 0
+    while n not in range(1, len(assignments) + 1):
+        try:
+            n = int(input('which assignment to mark? > '))
+        except ValueError:
+            pass
+    assignment = assignments[n-1]
+    assignment.complete = not assignment.complete
+    db.update_assignment(assignment)
+    print('assignment marked as complete')
+
+
 def main():
     ans = ''
-    while ans not in ['s', 'n', 'u']: # TODO: add [m]ark and [d]elete
-        ans = input('[s]how, [n]ew, [u]pdate? > ')
+    while ans not in ['s', 'a', 'n', 'm', 'u']:
+        ans = input('[s]how, show[a]ll, [n]ew, [m]ark complete, [u]pdate? > ')
 
     canvas = Canvas(API_URL, API_KEY)
     db = DBHandler(DB_PATH)
 
-    if ans == 'u':
-        update_assignments(db, canvas)
-
     if ans == 's':
         show_assignments(db, canvas)
 
+    if ans == 'a':
+        show_assignments(db, canvas, hide_past_and_complete=False)
+
+    if ans == 'u':
+        update_assignments(db, canvas)
+
     if ans == 'n':
         create_new_assignment(db, canvas)
+
+    if ans == 'm':
+        mark_assignment_complete(db, canvas)
+
+    if ans == 'u':
+        update_assignments(db, canvas)
 
     #if ans == 'd':
     #    assignments = db.get_assignments()

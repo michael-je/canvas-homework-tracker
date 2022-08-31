@@ -21,7 +21,8 @@ class DBHandler():
                 notes text,
                 date text,
                 time text,
-                course_name text
+                course_name text,
+                complete integer
             )
             """
         )
@@ -39,17 +40,11 @@ class DBHandler():
                 :notes,
                 :date,
                 :time,
-                :course_name
+                :course_name,
+                :complete
             )
             """,
-            {
-                'id': assignment.id,
-                'name': assignment.name,
-                'notes': assignment.notes,
-                'date': assignment.datetime.strftime('%d-%m-%Y'),
-                'time': assignment.datetime.strftime('%H:%M'),
-                'course_name': assignment.course_name
-            }
+            assignment.get_props(db_readable=True)
         )
         conn.commit()
         conn.close()
@@ -59,9 +54,7 @@ class DBHandler():
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
         c.execute(
-            """
-            SELECT * FROM assignments
-            """
+            'SELECT * FROM assignments'
         )
         assignments = c.fetchall()
         conn.close()
@@ -74,13 +67,34 @@ class DBHandler():
         conn.commit()
         conn.close()
 
+    def update_assignment(self, assignment):
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute(
+            """
+            UPDATE assignments SET
+                id = :id,
+                name = :name,
+                notes = :notes,
+                date = :date,
+                time = :time,
+                course_name = :course_name,
+                complete = :complete
+            WHERE id=:id
+            """,
+            assignment.get_props(db_readable=True)
+        )
+        conn.commit()
+        conn.close()
+
 if __name__ == '__main__':
     props = {
         'course_name': 'course_name',
         'name': 'name',
         'notes': 'notes',
         'date': '09-04-2022',
-        'time': '16:30'
+        'time': '16:30',
+        'complete': False
     }
     assignment = Assignment(props)
 

@@ -111,6 +111,11 @@ def create_new_assignment(db, canvas):
 
 
 def mark_assignment_complete(db, canvas):
+    """
+    Inverts an assignment's complete status.
+    
+    Returns the new complete status of the assignment (True/False)
+    """
     show_assignments(db, canvas, hide_past_and_complete=False)
     assignments = db.get_assignments()
     assignments.sort(key=lambda x: x.datetime.timestamp())
@@ -123,6 +128,7 @@ def mark_assignment_complete(db, canvas):
     assignment = assignments[n-1]
     assignment.complete = not assignment.complete
     db.update_assignment(assignment)
+    return assignment.complete
 
 
 def delete_assignment(db, canvas):
@@ -159,8 +165,11 @@ def main():
         print('New assignment created')
 
     if ans == 'm':
-        mark_assignment_complete(db, canvas)
-        print('assignment marked as complete')
+        result = mark_assignment_complete(db, canvas)
+        if result:
+            print('assignment marked as complete')
+        else:
+            print('assignment unmarked')
 
     if ans == 'd':
         delete_assignment(db, canvas)

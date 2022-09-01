@@ -34,7 +34,7 @@ def get_selections(assignments, message=None):
             for i in range(lower_bound, upper_bound + 1):
                 selections.append(i)
         else:
-            selections.append(i)
+            selections.append(int(selected_range[0]))
 
     selections = list(set(selections))
     selections.sort()

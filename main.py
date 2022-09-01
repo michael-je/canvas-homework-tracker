@@ -1,14 +1,54 @@
 from datetime import datetime
 from canvasapi import Canvas
 import random
+import re
 
 from .db import DBHandler
 from .assignment import Assignment
 from .cfg import API_URL, API_KEY, DB_PATH, TEST
-from .utils import NoAssignmentsError
+from .utils import NoAssignmentsError, SelectionOutOfBoundsError, POSITIVE_RESPONSES, NEGATIVE_RESPONSES
 
 if TEST:
     DB_PATH = 'test.db'
+
+
+def get_selections(assignments, message=None):
+    print_assignments(assignments)
+    if message:
+        print(message)
+    print('Use commas and dashes to select multiple assignments, i.e: 1,3,4-8')
+
+    input_regex = r'^\d+(-\d+)?(,\d+|,\d+-\d+)*$'
+    input_valid = False
+    while not input_valid:
+        user_input = input('Enter your selection > ')
+        input_valid = bool(re.match(input_regex, user_input))
+    
+    selections = []
+    selected_ranges = user_input.split(',')
+    for selected_range in selected_ranges:
+        selected_range = selected_range.split('-')
+        if len(selected_range) == 2:
+            lower_bound = int(selected_range[0])
+            upper_bound = int(selected_range[1])
+            for i in range(lower_bound, upper_bound + 1):
+                selections.append(i)
+        else:
+            selections.append(i)
+
+    selections = list(set(selections))
+    selections.sort()
+    if selections[-1] > len(assignments):
+        raise SelectionOutOfBoundsError
+    return selections
+
+
+def filter_and_sort_assignments(assignments, filter_past_and_complete=False):
+    if filter_past_and_complete:
+        assignments = list(filter(lambda a: a.datetime > datetime.now() and not a.complete, assignments))
+    assignments.sort(key=lambda x: x.datetime.timestamp())
+    return assignments
+
 
 def update_assignments(db, canvas):
     c_courses = canvas.get_courses()
@@ -33,13 +73,9 @@ def update_assignments(db, canvas):
                 db.create_assignment(assignment)
 
 
-def show_assignments(db, _canvas, hide_past_and_complete=True):
-    assignments = db.get_assignments()
-    if hide_past_and_complete:
-        assignments = list(filter(lambda a: a.datetime > datetime.now() and not a.complete, assignments))
+def print_assignments(assignments):
     if not assignments:
         raise NoAssignmentsError
-    assignments.sort(key=lambda x: x.datetime.timestamp())
     for n, assignment in enumerate(assignments):
         print(f'{n+1:2}. {str(assignment)}')
 
@@ -116,34 +152,32 @@ def mark_assignment_complete(db, canvas):
     
     Returns the new complete status of the assignment (True/False)
     """
-    show_assignments(db, canvas, hide_past_and_complete=False)
     assignments = db.get_assignments()
-    assignments.sort(key=lambda x: x.datetime.timestamp())
-    n = 0
-    while n not in range(1, len(assignments) + 1):
-        try:
-            n = int(input('which assignment to mark? > '))
-        except ValueError:
-            pass
-    assignment = assignments[n-1]
-    assignment.complete = not assignment.complete
-    db.update_assignment(assignment)
-    return assignment.complete
+    assignments = filter_and_sort_assignments(assignments)
+
+    selections = get_selections(assignments, message='which assignment(s) to mark?')
+    for selection in selections:
+        assignment = assignments[selection-1]
+        assignment.complete = not assignment.complete
+
+        if assignment.complete == False:
+            answer = ''
+            print(f'are you sure you want to mark assignment "{assignment.name}" as incomplete?')
+            while answer not in (POSITIVE_RESPONSES + NEGATIVE_RESPONSES):
+                answer = input('y/n > ')
+            if answer in NEGATIVE_RESPONSES:
+                continue
+
+        db.update_assignment(assignment)
 
 
 def delete_assignment(db, canvas):
     assignments = db.get_assignments()
-    if not assignments:
-        raise NoAssignmentsError
-    assignments.sort(key=lambda x: x.datetime.timestamp())
-    show_assignments(db, canvas, hide_past_and_complete=False)
-    n = 0
-    while n not in range(1, len(assignments) + 1):
-        try:
-            n = int(input('which assignment to delete? > '))
-        except ValueError:
-            pass
-    db.delete_assignment(assignments[n-1])
+    assignments = filter_and_sort_assignments(assignments)
+
+    selections = get_selections(assignments, message='which assignment(s) to delete?')
+    for selection in selections:
+        db.delete_assignment(assignments[selection-1])
 
 
 def main():
@@ -155,10 +189,14 @@ def main():
     db = DBHandler(DB_PATH)
 
     if ans == 's':
-        show_assignments(db, canvas)
+        assignments = db.get_assignments()
+        assignments = filter_and_sort_assignments(assignments, filter_past_and_complete=True)
+        print_assignments(assignments)
 
     if ans == 'a':
-        show_assignments(db, canvas, hide_past_and_complete=False)
+        assignments = db.get_assignments()
+        assignments = filter_and_sort_assignments(assignments)
+        print_assignments(assignments)
 
     if ans == 'n':
         create_new_assignment(db, canvas)
@@ -166,14 +204,11 @@ def main():
 
     if ans == 'm':
         result = mark_assignment_complete(db, canvas)
-        if result:
-            print('assignment marked as complete')
-        else:
-            print('assignment unmarked')
+        print('assignment(s) marked')
 
     if ans == 'd':
         delete_assignment(db, canvas)
-        print('assignment deleted')
+        print('assignment(s) deleted')
 
     if ans == 'u':
         update_assignments(db, canvas)
@@ -185,5 +220,5 @@ if __name__ == '__main__':
         main()
     except KeyboardInterrupt:
         print('\nexiting')
-    except NoAssignmentsError as e:
+    except (NoAssignmentsError, SelectionOutOfBoundsError) as e:
         print(e)

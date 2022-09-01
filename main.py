@@ -81,7 +81,7 @@ def print_assignments(assignments):
 
 
 def create_new_assignment(db, canvas):
-    c_courses = canvas.get_courses() # TODO: get rid of this api call, but keep it dynamic
+    c_courses = canvas.get_courses()
     course_names = [c_course.name for c_course in c_courses
         if len(list(c_course.get_assignments()))]
     ans = 0

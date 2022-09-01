@@ -28,17 +28,16 @@ def get_selections(assignments, message=None):
     selected_ranges = user_input.split(',')
     for selected_range in selected_ranges:
         selected_range = selected_range.split('-')
-        new_selections = []
         if len(selected_range) == 2:
             lower_bound = int(selected_range[0])
             upper_bound = int(selected_range[1])
             for i in range(lower_bound, upper_bound + 1):
-                new_selections.append(i)
+                selections.append(i)
         else:
-            new_selections.append(int(selected_range[0]))
-        selections += new_selections
+            selections.append(i)
 
     selections = list(set(selections))
+    selections.sort()
     if selections[-1] > len(assignments):
         raise SelectionOutOfBoundsError
     return selections

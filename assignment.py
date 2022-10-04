@@ -14,8 +14,6 @@ class Assignment():
         self.complete = bool(props.get('complete', False))
 
     def truncate_name(self):
-        if self.course_name == 'Strjál stærðfræði I':
-            self.name = self.name[:self.name.find('("')]
         if len(self.name) > COURSE_NAME_TRUNCLEN:
             self.name = self.name[:COURSE_NAME_TRUNCLEN] + '...'
         return self.name

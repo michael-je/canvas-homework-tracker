@@ -3,3 +3,4 @@ secrets.py
 __pycache__/
 old/
 *.db
+.vscode/

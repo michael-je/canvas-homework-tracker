@@ -1,5 +1,6 @@
-from dateutil.parser import parse
 from termcolor import colored as color
+from datetime import datetime
+
 from .cfg import COURSE_NAME_TRUNCLEN
 
 class Assignment():
@@ -8,9 +9,7 @@ class Assignment():
         self.name = props['name']
         self.notes = props['notes']
         self.course_name = props['course_name']
-        time = props['time']
-        date = props['date']
-        self.datetime = parse(f'{date} {time}')
+        self.timestamp = int(props['timestamp'])
         self.complete = bool(props.get('complete', False))
 
     def truncate_name(self):
@@ -28,13 +27,16 @@ class Assignment():
             'notes': 'grey',
         }
         if self.complete:
-            for prop in ['date', 'time', 'course_name', 'name', 'notes']:
+            for prop in ['timestamp', 'course_name', 'name', 'notes']:
                 text_colors[prop] = 'grey'
-        
+
+        datetime_obj = datetime.fromtimestamp(self.timestamp)
+        formatted_date = datetime_obj.strftime('%H-%M')
+        formatted_time = datetime_obj.strftime('%d-%m-%Y')
 
         complete_mark = color('X' if self.complete else ' ', text_colors['complete_mark'])
-        date = color(self.datetime.strftime('%d-%m-%Y'), text_colors['date'])
-        time = color(self.datetime.strftime('%H:%M'), text_colors['time'])
+        date = color(formatted_date, text_colors['date'])
+        time = color(formatted_time, text_colors['time'])
         course_name = color(self.course_name, text_colors['course_name'])
         name = color(self.name, text_colors['name'])
         notes = color(f'({self.notes})', text_colors['notes']) if self.notes else ''
@@ -47,9 +49,9 @@ class Assignment():
             'id': self.id,
             'name': self.name,
             'notes': self.notes,
-            'date': self.datetime.strftime('%d-%m-%Y'),
-            'time': self.datetime.strftime('%H:%M'),
+            'timestamp': self.timestamp,
             'course_name': self.course_name,
             'complete': int(self.complete) if db_readable else self.complete
         }
         return props
+

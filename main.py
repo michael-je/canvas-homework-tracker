@@ -45,8 +45,10 @@ def get_selections(assignments, message=None):
 
 def filter_and_sort_assignments(assignments, filter_past_and_complete=False):
     if filter_past_and_complete:
-        assignments = list(filter(lambda a: a.datetime > datetime.now() and not a.complete, assignments))
-    assignments.sort(key=lambda x: x.datetime.timestamp())
+        assignments = list(filter(
+            lambda a: a.timestamp > datetime.now().timestamp() and not a.complete, assignments
+        ))
+    assignments.sort(key=lambda a: a.timestamp)
     return assignments
 
 
@@ -62,8 +64,7 @@ def update_assignments(db, canvas):
                     'id': c_assignment.id,
                     'name': c_assignment.name,
                     'course_name': c_course.name,
-                    'date': c_assignment.due_at_date.strftime('%d-%m-%Y'),
-                    'time': c_assignment.due_at_date.strftime('%H:%M'),
+                    'timestamp': c_assignment.due_at_date.timestamp(),
                     'notes': ''
                 }
             except AttributeError:
@@ -138,8 +139,7 @@ def create_new_assignment(db, canvas):
         'id': -int(random.random() * 1000000000), # shitfix
         'name': assignment_name,
         'course_name': course_name,
-        'date': date_and_time.strftime('%d-%m-%Y'),
-        'time': date_and_time.strftime('%H:%M'),
+        'timestamp': date_and_time.gettimestamp(),
         'notes': notes
     }
     assignment = Assignment(props)

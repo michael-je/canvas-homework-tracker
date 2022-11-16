@@ -19,8 +19,7 @@ class DBHandler():
                 id text,
                 name text,
                 notes text,
-                date text,
-                time text,
+                timestamp integer,
                 course_name text,
                 complete integer
             )
@@ -38,8 +37,7 @@ class DBHandler():
                 :id,
                 :name,
                 :notes,
-                :date,
-                :time,
+                :timestamp,
                 :course_name,
                 :complete
             )
@@ -76,8 +74,7 @@ class DBHandler():
                 id = :id,
                 name = :name,
                 notes = :notes,
-                date = :date,
-                time = :time,
+                timestamp = :timestamp,
                 course_name = :course_name,
                 complete = :complete
             WHERE id=:id
@@ -92,8 +89,7 @@ if __name__ == '__main__':
         'course_name': 'course_name',
         'name': 'name',
         'notes': 'notes',
-        'date': '09-04-2022',
-        'time': '16:30',
+        'timestamp': 1668608839,
         'complete': False
     }
     assignment = Assignment(props)

@@ -180,7 +180,7 @@ def mark_assignment_complete(db, canvas):
         assignment.complete = not assignment.complete
 
         if assignment.complete == False:
-            answer = ''
+            answer = None
             print(f'are you sure you want to mark assignment "{assignment.name}" as incomplete?')
             while answer not in (POSITIVE_RESPONSES + NEGATIVE_RESPONSES):
                 answer = input('y/n > ')

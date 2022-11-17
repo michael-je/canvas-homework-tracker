@@ -1,4 +1,4 @@
-POSITIVE_RESPONSES = ['y', 'Y', 'yes' 'YES']
+POSITIVE_RESPONSES = ['y', 'Y', 'yes' 'YES', '']
 NEGATIVE_RESPONSES = ['n', 'N', 'no', 'NO']
 
 class NoAssignmentsError(Exception):

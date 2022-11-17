@@ -57,21 +57,40 @@ def update_assignments(db, canvas):
     old_assignments = db.get_assignments()
 
     for c_course in c_courses:
+
         c_assignments = c_course.get_assignments()
         for c_assignment in c_assignments:
-            try: 
-                assignment_props = {
-                    'id': c_assignment.id,
+
+            # some assignments are missing a due_date
+            try:
+                assignment_timestamp = c_assignment.due_at_date.timestamp()
+            except AttributeError:
+                assignment_timestamp = 0
+
+            updated_assignment = None
+            for old_assignment in old_assignments:
+                if old_assignment.id == c_assignment.id:
+                    updated_assignment = old_assignment
+
+            if updated_assignment:
+                updated_props = {
                     'name': c_assignment.name,
                     'course_name': c_course.name,
-                    'timestamp': c_assignment.due_at_date.timestamp(),
-                    'notes': ''
+                    'timestamp': assignment_timestamp,
                 }
-            except AttributeError:
+                updated_assignment.update_props(updated_props)
+                db.update_assignment(updated_assignment)
                 continue
+
+            assignment_props = {
+                'id': c_assignment.id,
+                'name': c_assignment.name,
+                'course_name': c_course.name,
+                'timestamp': assignment_timestamp,
+                'notes': ''
+            }
             assignment = Assignment(assignment_props)
-            if assignment.id not in [assignment.id for assignment in old_assignments]:
-                db.create_assignment(assignment)
+            db.create_assignment(assignment)
 
 
 def print_assignments(assignments):

@@ -2,6 +2,7 @@ from datetime import datetime
 from canvasapi import Canvas
 import random
 import re
+import math
 
 from .db import DBHandler
 from .assignment import Assignment
@@ -44,11 +45,15 @@ def get_selections(assignments, message=None):
 
 
 def filter_and_sort_assignments(assignments, filter_past_and_complete=False):
+    """
+    Filters out assignments past their due date but includes timestamp = 0 (no due
+    date). Assignments marked as complete will also be filtered out.
+    """
     if filter_past_and_complete:
         assignments = list(filter(
-            lambda a: a.timestamp > datetime.now().timestamp() and not a.complete, assignments
+            lambda a: (not a.timestamp or a.timestamp > datetime.now().timestamp()) and not a.complete, assignments
         ))
-    assignments.sort(key=lambda a: a.timestamp)
+    assignments.sort(key=lambda a: math.inf if a.timestamp == 0 else a.timestamp)
     return assignments
 
 

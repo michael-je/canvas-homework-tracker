@@ -102,7 +102,7 @@ def print_assignments(assignments):
     if not assignments:
         raise NoAssignmentsError
     for n, assignment in enumerate(assignments):
-        print(f'{n+1:2}. {str(assignment)}')
+        print(f'{n+1:3}. {str(assignment)}')
 
 
 def create_new_assignment(db, canvas):
